@@ -60,6 +60,8 @@ export namespace Golem {
 									fulfill(articles);
 								}
 
+							}).catch(function (err) {
+								console.error(err);
 							})
 						});
 

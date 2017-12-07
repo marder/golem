@@ -36,6 +36,8 @@ var Golem;
                                 if (numParsedArticles === numArticles) {
                                     fulfill(articles);
                                 }
+                            }).catch(function (err) {
+                                console.error(err);
                             });
                         });
                     });
