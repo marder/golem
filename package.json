@@ -3,9 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "scripts": {},
   "author": "",
   "license": "ISC",
   "devDependencies": {
@@ -15,6 +13,7 @@
     "gulp": "^3.9.1",
     "gulp-tslint": "^8.1.2",
     "gulp-typescript": "^3.2.3",
+    "select-shell": "^1.0.0",
     "tslint": "^5.8.0",
     "typescript": "^2.6.2"
   },

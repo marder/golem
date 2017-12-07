@@ -101,7 +101,14 @@ export namespace Golem {
 
 						let $ = cheerio.load(responseText);
 
+						// trim trim trim trim trim trim trim
 						let title = $('article header h1').text().trim();
+						let trimmedTitle = "";
+						title.split('\n').forEach(function (line) {
+							trimmedTitle += line.trim() + " ";
+						});
+						title = trimmedTitle.trim();
+						
 						let content = $('article p').text().trim()
 
 						let article: Article = {

@@ -64,7 +64,13 @@ var Golem;
                             responseText = Buffer.concat(_bufs).toString("utf8");
                         }
                         let $ = cheerio.load(responseText);
+                        // trim trim trim trim trim trim trim
                         let title = $('article header h1').text().trim();
+                        let trimmedTitle = "";
+                        title.split('\n').forEach(function (line) {
+                            trimmedTitle += line.trim() + " ";
+                        });
+                        title = trimmedTitle.trim();
                         let content = $('article p').text().trim();
                         let article = {
                             title: title,
