@@ -31,29 +31,24 @@ var Golem;
     async function getArticle(url) {
         let html = await request(url);
         let $ = cheerio.load(html);
-        // trim trim trim trim trim trim trim
-        let title = $('article header h1').text().trim();
-        let trimmedTitle = "";
-        title.split('\n').forEach(function (line) {
-            trimmedTitle += line.trim() + " ";
-        });
-        title = trimmedTitle.trim();
-        let contents = $('article p');
-        let content = "";
-        for (let i = 0; i < contents.length; i++) {
-            let p = $(contents[i]);
-            content += p.text();
-        }
         let article = {
-            title: title,
-            content: content,
+            meta: {
+                url: url,
+                author: null,
+                date: new Date(),
+                keywords: []
+            },
+            title: "",
+            content: "",
             plainHtml: html,
-            url: url,
-            features: {
-                keywords: [],
-                category: ""
-            }
+            pictures: [],
+            videos: []
         };
+        _pickMetadata(article, $);
+        _pickTitle(article, $);
+        _pickTextContent(article, $);
+        _pickPictures(article, $);
+        _pickVideos(article, $);
         if (!_validateArticle(article)) {
             throw "Article failed validation";
         }
@@ -61,6 +56,52 @@ var Golem;
         return article;
     }
     Golem.getArticle = getArticle;
+    function _pickTitle(article, $) {
+        let title = $('article header h1').text().trim();
+        let trimmedTitle = "";
+        title.split('\n').forEach(function (line) {
+            trimmedTitle += line.trim() + " ";
+        });
+        article.title = trimmedTitle.trim();
+    }
+    function _pickTextContent(article, $) {
+        let contents = $('article p');
+        let content = "";
+        for (let i = 0; i < contents.length; i++) {
+            content += $(contents[i]).text();
+        }
+        article.content = content;
+    }
+    function _pickPictures(article, $) {
+        let pictures = $("article img");
+        for (let i = 0; i < pictures.length; i++) {
+            let pic = pictures[i].attribs.src;
+            if (pic) {
+                article.pictures.push(pic);
+            }
+        }
+    }
+    function _pickVideos(article, $) {
+        let videos = $("article p video");
+        for (let i = 0; i < videos.length; i++) {
+            let video = videos[i].attribs.src;
+            if (video) {
+                article.videos.push(video);
+            }
+        }
+    }
+    function _pickMetadata(article, $) {
+        // Read article release date
+        let date = $('aside time').text();
+        article.meta.date = new Date(Date.parse(date));
+        // Read author name
+        let author = $('aside [rel=author]').text();
+        article.meta.author = author;
+        // Read keywords
+        $('aside a[title]').each(function (index, element) {
+            article.meta.keywords.push($(element).text());
+        });
+    }
     function request(url) {
         return new Promise(function (fulfill, reject) {
             https.get(url, function (res) {
@@ -92,8 +133,8 @@ var Golem;
         try {
             let folder = path.join(process.cwd(), "saves");
             await fs.mkdirs(folder);
-            let file = path.join(folder, sanitize(article.title) + ".md");
-            ;
+            let name = sanitize(article.title);
+            let file = path.join(folder, name + ".md");
             if (await fs.exists(file)) {
                 await fs.unlink(file);
             }
@@ -104,6 +145,11 @@ var Golem;
             writeStream.write("# " + article.title + '\n\n');
             writeStream.write(article.content);
             writeStream.end();
+            let jsonFile = path.join(folder, name + ".json");
+            if (await fs.exists(jsonFile)) {
+                await fs.unlink(jsonFile);
+            }
+            await fs.writeFile(jsonFile, JSON.stringify(article, undefined, 2), "utf8");
         }
         catch (err) {
             console.error(err);
