@@ -30,4 +30,20 @@ var articles = await Golem.getArticles();
 ### Fetch artikle
 ```typescript
 var article = await Golem.getArticle("${ARTICLE_URL}");
+// Article will be an object like 
+{
+	meta: {
+		url: string,
+		date: Date,
+		author: string,
+		keywords: string[]
+	},
+	title: string,
+	content: string,
+	plainHtml: string,
+	// Array of URLs
+	pictures: string[],
+	// Array of URLs
+	videos: string[]
+}
 ```
