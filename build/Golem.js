@@ -1,7 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const sanitize = require("sanitize-filename");
 const https = require("https");
 const cheerio = require("cheerio");
+const path = require("path");
+const fs = require("@rammbulanz/afs");
 const Validator_1 = require("./Validator");
 var Golem;
 (function (Golem) {
@@ -25,50 +28,6 @@ var Golem;
         return articles;
     }
     Golem.getArticles = getArticles;
-    function getArticlesOld() {
-        return new Promise(function (fulfill, reject) {
-            https.get("https://www.golem.de/ticker/", function (res) {
-                if (res.statusCode === 200) {
-                    let _bufs = [], responseText = "";
-                    res.on("data", function (chunk) {
-                        if (typeof chunk === "string") {
-                            responseText += chunk;
-                        }
-                        else {
-                            _bufs.push(chunk);
-                        }
-                    });
-                    res.on("end", function () {
-                        if (_bufs.length > 0) {
-                            responseText = Buffer.concat(_bufs).toString("utf8");
-                        }
-                        let articles = [];
-                        let $ = cheerio.load(responseText);
-                        let $_Articles = $('ol.list-tickers li a');
-                        let numArticles = $_Articles.length;
-                        let numParsedArticles = 0;
-                        $_Articles.each(function (index, element) {
-                            let url = element.attribs.href;
-                            getArticle(url).then(function (article) {
-                                numParsedArticles++;
-                                if (article)
-                                    articles.push(article);
-                                if (numParsedArticles === numArticles) {
-                                    fulfill(articles);
-                                }
-                            }).catch(function (err) {
-                                console.error(err);
-                            });
-                        });
-                    });
-                }
-                else {
-                    reject(new Error(`${res.statusCode} - ${res.statusMessage}`));
-                }
-            });
-        });
-    }
-    Golem.getArticlesOld = getArticlesOld;
     async function getArticle(url) {
         let html = await request(url);
         let $ = cheerio.load(html);
@@ -79,7 +38,12 @@ var Golem;
             trimmedTitle += line.trim() + " ";
         });
         title = trimmedTitle.trim();
-        let content = $('article p').text().trim();
+        let contents = $('article p');
+        let content = "";
+        for (let i = 0; i < contents.length; i++) {
+            let p = $(contents[i]);
+            content += p.text();
+        }
         let article = {
             title: title,
             content: content,
@@ -93,6 +57,7 @@ var Golem;
         if (!_validateArticle(article)) {
             throw "Article failed validation";
         }
+        saveAsMarkdown(article);
         return article;
     }
     Golem.getArticle = getArticle;
@@ -122,6 +87,27 @@ var Golem;
                 }
             });
         });
+    }
+    async function saveAsMarkdown(article) {
+        try {
+            let folder = path.join(process.cwd(), "saves");
+            await fs.mkdirs(folder);
+            let file = path.join(folder, sanitize(article.title) + ".md");
+            ;
+            if (await fs.exists(file)) {
+                await fs.unlink(file);
+            }
+            let writeStream = fs.createWriteStream(file, {
+                flags: 'w',
+                encoding: 'utf8'
+            });
+            writeStream.write("# " + article.title + '\n\n');
+            writeStream.write(article.content);
+            writeStream.end();
+        }
+        catch (err) {
+            console.error(err);
+        }
     }
     function _validateArticle(article) {
         return Validator_1.Validator.validate(article, {

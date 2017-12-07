@@ -12,7 +12,10 @@ export namespace Validator {
 				return false;
 			}
 
-			if (typeof o[p] !== properties[p]) {
+			let expectedType = properties[p].toLowerCase()
+			let actualType = (typeof o[p]).toLowerCase()
+
+			if (expectedType !== actualType) {
 				return false;
 			}
 

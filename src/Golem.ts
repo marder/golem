@@ -1,6 +1,10 @@
+import * as sanitize from 'sanitize-filename';
 import * as https from 'https';
 import * as cheerio from 'cheerio';
+import * as path from 'path';
+import * as fs from '@rammbulanz/afs';
 import { Validator } from './Validator'
+import * as os from 'os';
 
 export namespace Golem {
 
@@ -43,67 +47,6 @@ export namespace Golem {
 
 		return articles;
 	}
-	export function getArticlesOld(): Promise<Article[]> {
-		return new Promise(function (fulfill, reject) {
-			https.get("https://www.golem.de/ticker/", function (res) {
-
-				if (res.statusCode === 200) {
-
-					let _bufs = [], responseText = "";
-
-					res.on("data", function (chunk) {
-
-						if (typeof chunk === "string") {
-							responseText += chunk;
-						} else {
-							_bufs.push(chunk);
-						}
-
-					});
-
-					res.on("end", function () {
-
-						if (_bufs.length > 0) {
-							responseText = Buffer.concat(_bufs).toString("utf8");
-						}
-
-						let articles: Article[] = [];
-						let $ = cheerio.load(responseText);
-
-
-						let $_Articles = $('ol.list-tickers li a');
-						let numArticles = $_Articles.length;
-						let numParsedArticles = 0;
-
-						$_Articles.each(function (index, element) {
-							let url = element.attribs.href;
-							getArticle(url).then(function (article) {
-
-								numParsedArticles++;
-
-								if (article)
-									articles.push(article);
-
-								if (numParsedArticles === numArticles) {
-									fulfill(articles);
-								}
-
-							}).catch(function (err) {
-								console.error(err);
-							})
-						});
-
-					});
-
-				} else {
-					reject(new Error(`${res.statusCode} - ${res.statusMessage}`));
-				}
-
-			});
-
-		});
-
-	}
 
 	export async function getArticle(url) {
 
@@ -118,7 +61,12 @@ export namespace Golem {
 		});
 		title = trimmedTitle.trim();
 
-		let content = $('article p').text().trim()
+		let contents = $('article p');
+		let content = "";
+		for (let i=0; i<contents.length; i++) {
+			let p = $(contents[i]);
+			content += p.text();
+		}
 
 		let article: Article = {
 			title: title,
@@ -134,6 +82,8 @@ export namespace Golem {
 		if (!_validateArticle(article)) {
 			throw "Article failed validation";
 		}
+
+		saveAsMarkdown(article);
 
 		return article;
 
@@ -171,6 +121,34 @@ export namespace Golem {
 			})
 
 		});
+	}
+
+	async function saveAsMarkdown(article: Article) {
+
+		try {
+
+			let folder = path.join(process.cwd(), "saves");
+			await fs.mkdirs(folder);
+
+			let file = path.join(folder, sanitize(article.title) + ".md");;
+
+			if (await fs.exists(file)) {
+				await fs.unlink(file);
+			}
+
+			let writeStream = fs.createWriteStream(file, {
+				flags: 'w',
+				encoding: 'utf8'
+			});
+
+			writeStream.write("# " + article.title + '\n\n');
+			writeStream.write(article.content);
+
+			writeStream.end();
+
+		} catch (err) {
+			console.error(err);
+		}
 	}
 
 	function _validateArticle(article: Article) {
