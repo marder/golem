@@ -1,1 +1,1 @@
-export * from 'declarations/Golem'
+export * from './declarations/Golem'
