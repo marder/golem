@@ -1,5 +1,6 @@
 import * as https from 'https';
 import * as cheerio from 'cheerio';
+import { Validator } from './Validator'
 
 export namespace Golem {
 
@@ -122,7 +123,11 @@ export namespace Golem {
 							}
 						};
 
-						fulfill(article);
+						if (_validateArticle(article)) {
+							fulfill(article);
+						} else {
+							reject("Article failed validation");
+						}
 
 					})
 
@@ -136,7 +141,13 @@ export namespace Golem {
 	}
 
 	function _validateArticle(article: Article) {
-
+		return Validator.validate(article, {
+			title: "string",
+			content: "string",
+			plainHtml: "string",
+			url: "string",
+			features: "object"
+		});
 	}
 
 }

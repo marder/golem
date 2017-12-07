@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const https = require("https");
 const cheerio = require("cheerio");
+const Validator_1 = require("./Validator");
 var Golem;
 (function (Golem) {
     function getArticles() {
@@ -82,7 +83,12 @@ var Golem;
                                 category: ""
                             }
                         };
-                        fulfill(article);
+                        if (_validateArticle(article)) {
+                            fulfill(article);
+                        }
+                        else {
+                            reject("Article failed validation");
+                        }
                     });
                 }
                 else {
@@ -93,6 +99,13 @@ var Golem;
     }
     Golem.getArticle = getArticle;
     function _validateArticle(article) {
+        return Validator_1.Validator.validate(article, {
+            title: "string",
+            content: "string",
+            plainHtml: "string",
+            url: "string",
+            features: "object"
+        });
     }
 })(Golem = exports.Golem || (exports.Golem = {}));
 
