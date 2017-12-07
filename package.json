@@ -11,6 +11,7 @@
   "devDependencies": {
     "@types/cheerio": "^0.22.6",
     "@types/node": "^8.0.56",
+    "del": "^3.0.0",
     "gulp": "^3.9.1",
     "gulp-tslint": "^8.1.2",
     "gulp-typescript": "^3.2.3",

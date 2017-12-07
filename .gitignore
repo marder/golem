@@ -29,7 +29,7 @@ build/Release
 node_modules
 
 # Build files
-build
+# build
 declarations
 maps
-docs
+# docs
