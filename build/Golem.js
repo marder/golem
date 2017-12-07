@@ -5,7 +5,6 @@ const https = require("https");
 const cheerio = require("cheerio");
 const path = require("path");
 const fs = require("@rammbulanz/afs");
-const Validator_1 = require("./Validator");
 var Golem;
 (function (Golem) {
     async function getArticles() {
@@ -49,9 +48,6 @@ var Golem;
         _pickTextContent(article, $);
         _pickPictures(article, $);
         _pickVideos(article, $);
-        if (!_validateArticle(article)) {
-            throw "Article failed validation";
-        }
         saveAsMarkdown(article);
         return article;
     }
@@ -154,15 +150,6 @@ var Golem;
         catch (err) {
             console.error(err);
         }
-    }
-    function _validateArticle(article) {
-        return Validator_1.Validator.validate(article, {
-            title: "string",
-            content: "string",
-            plainHtml: "string",
-            url: "string",
-            features: "object"
-        });
     }
 })(Golem = exports.Golem || (exports.Golem = {}));
 

@@ -3,7 +3,6 @@ import * as https from 'https';
 import * as cheerio from 'cheerio';
 import * as path from 'path';
 import * as fs from '@rammbulanz/afs';
-import { Validator } from './Validator'
 import * as os from 'os';
 
 export namespace Golem {
@@ -75,10 +74,6 @@ export namespace Golem {
 		_pickTextContent(article, $);
 		_pickPictures(article, $);
 		_pickVideos(article, $);
-
-		if (!_validateArticle(article)) {
-			throw "Article failed validation";
-		}
 
 		saveAsMarkdown(article);
 
@@ -224,16 +219,6 @@ export namespace Golem {
 		} catch (err) {
 			console.error(err);
 		}
-	}
-
-	function _validateArticle(article: Article) {
-		return Validator.validate(article, {
-			title: "string",
-			content: "string",
-			plainHtml: "string",
-			url: "string",
-			features: "object"
-		});
 	}
 
 }
