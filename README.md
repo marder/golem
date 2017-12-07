@@ -2,7 +2,8 @@
 
 Fetch golem.de/ticker articles
 
-State: In development. NPM module not published yet
+Note: It fetches the golem articles from plain html. If golem.de will change an important node, this module can be broken.
+Use github issue tracker to report it if it happens.
 
 # Install
 
