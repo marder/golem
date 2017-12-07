@@ -5,7 +5,27 @@ const cheerio = require("cheerio");
 const Validator_1 = require("./Validator");
 var Golem;
 (function (Golem) {
-    function getArticles() {
+    async function getArticles() {
+        let html = await request("https://www.golem.de/ticker/");
+        let articles = [];
+        let $ = cheerio.load(html);
+        let _articles = $('ol.list-tickers li a');
+        for (let i = 0; i < _articles.length; i++) {
+            let url = _articles[i].attribs.href;
+            try {
+                let article = await getArticle(url);
+                if (article) {
+                    articles.push(article);
+                }
+            }
+            catch (err) {
+                console.error(err);
+            }
+        }
+        return articles;
+    }
+    Golem.getArticles = getArticles;
+    function getArticlesOld() {
         return new Promise(function (fulfill, reject) {
             https.get("https://www.golem.de/ticker/", function (res) {
                 if (res.statusCode === 200) {
@@ -48,8 +68,35 @@ var Golem;
             });
         });
     }
-    Golem.getArticles = getArticles;
-    function getArticle(url) {
+    Golem.getArticlesOld = getArticlesOld;
+    async function getArticle(url) {
+        let html = await request(url);
+        let $ = cheerio.load(html);
+        // trim trim trim trim trim trim trim
+        let title = $('article header h1').text().trim();
+        let trimmedTitle = "";
+        title.split('\n').forEach(function (line) {
+            trimmedTitle += line.trim() + " ";
+        });
+        title = trimmedTitle.trim();
+        let content = $('article p').text().trim();
+        let article = {
+            title: title,
+            content: content,
+            plainHtml: html,
+            url: url,
+            features: {
+                keywords: [],
+                category: ""
+            }
+        };
+        if (!_validateArticle(article)) {
+            throw "Article failed validation";
+        }
+        return article;
+    }
+    Golem.getArticle = getArticle;
+    function request(url) {
         return new Promise(function (fulfill, reject) {
             https.get(url, function (res) {
                 if (res.statusCode === 200) {
@@ -61,36 +108,13 @@ var Golem;
                         else {
                             _bufs.push(chunk);
                         }
+                        ;
                     });
                     res.on("end", function () {
                         if (_bufs.length > 0) {
                             responseText = Buffer.concat(_bufs).toString("utf8");
                         }
-                        let $ = cheerio.load(responseText);
-                        // trim trim trim trim trim trim trim
-                        let title = $('article header h1').text().trim();
-                        let trimmedTitle = "";
-                        title.split('\n').forEach(function (line) {
-                            trimmedTitle += line.trim() + " ";
-                        });
-                        title = trimmedTitle.trim();
-                        let content = $('article p').text().trim();
-                        let article = {
-                            title: title,
-                            content: content,
-                            plainHtml: responseText,
-                            url: url,
-                            features: {
-                                keywords: [],
-                                category: ""
-                            }
-                        };
-                        if (_validateArticle(article)) {
-                            fulfill(article);
-                        }
-                        else {
-                            reject("Article failed validation");
-                        }
+                        fulfill(responseText);
                     });
                 }
                 else {
@@ -99,7 +123,6 @@ var Golem;
             });
         });
     }
-    Golem.getArticle = getArticle;
     function _validateArticle(article) {
         return Validator_1.Validator.validate(article, {
             title: "string",
