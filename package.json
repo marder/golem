@@ -19,7 +19,7 @@
     "typescript": "^2.6.2"
   },
   "dependencies": {
-    "@rammbulanz/afs": "^1.2.2",
+    "@rammbulanz/afs": "^1.2.3",
     "cheerio": "^1.0.0-rc.2",
     "sanitize-filename": "^1.6.1"
   }
